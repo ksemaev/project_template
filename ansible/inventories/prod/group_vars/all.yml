@@ -1,0 +1,5 @@
+---
+project: projectname
+ansible_user: root
+stand: prod
+tag_name: release

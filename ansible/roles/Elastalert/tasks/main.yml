@@ -1,0 +1,14 @@
+---
+  - name: Copy rules
+    template:
+      src: "{{ item }}.j2"
+      dest: "/opt/elastalert/rules/{{ item }}.yaml"
+    with_items:
+      - app_alert
+      - db_fatal
+
+  - name: restart elastalert service
+    service:
+      name: elastalert
+      enabled: yes
+      state: restarted

@@ -1,0 +1,24 @@
+<source>
+  @type tail
+  tag postgres
+  path /u03/pg_log/*.log
+  refresh_interval 10
+  pos_file /etc/td-agent/storage/pg.pos
+  <parse>
+    @type syslog
+  </parse>
+</source>
+
+<match **>
+  @type secure_forward
+  shared_key FLUENTD_projectname
+  self_hostname "#{Socket.gethostname}"
+  
+  secure yes
+  enable_strict_verification yes
+  ca_cert_path /etc/td-agent/ca_cert.pem
+
+  <server>
+    host elk01.projectname
+  </server>
+</match>

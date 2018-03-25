@@ -1,0 +1,26 @@
+---
+#Redeploy
+- name: redeploy
+  shell: "oc rollout latest dc/{{ item }}-deploy -n projectname -o revision"
+  register: REV
+  with_items:
+    - "{{ dc }}"
+    
+- name: Waiting for deploy status
+  shell: "oc rollout status dc/{{ item.0 }}-deploy -n projectname --revision={{ item.1.stdout }}"
+  with_together:
+    - "{{ dc }}"
+    - "{{ REV.results }}"
+  register: DEP
+
+- name: "Filtering out stdout"
+  set_fact:
+     out: "{{ out | default([]) + [item.stdout_lines] }}"
+  with_items:
+    - "{{ DEP.results }}"
+  no_log: yes
+
+- debug:
+    var: "{{ item }}"
+  with_items:
+    - "{{ out }}"

@@ -1,0 +1,37 @@
+es_host: localhost
+es_port: 9200
+name: db fatal
+type: frequency
+index: database-*
+num_events: 1
+timeframe:
+    minutes: 5
+include: ["@timestamp", "appname", "loglevel", "realmessage"]
+filter:
+- query:
+    query_string:
+      query: 'loglevel: "FATAL"'
+alert:
+- slack
+- telegram
+{% if stand == 'prod': %}
+alert_subject: "{0} caught {1} on prod"
+{% elif stand == 'preprod': %}
+alert_subject: "{0} caught {1} on preprod"
+{% endif %}
+alert_subject_args:
+- appname
+- loglevel
+alert_text: "{0}"
+alert_text_args:
+- realmessage
+alert_text_type: alert_text_only
+telegram_bot_token: 1111111111:GHGHGHGHGHGHG
+telegram_room_id: "-100323232323"
+{% if stand == 'prod': %}
+slack_webhook_url: "https://hooks.slack.com/services/Txxxxxxxxxxxxxx"
+{% elif stand == 'preprod': %}
+slack_webhook_url: "https://hooks.slack.com/services/Tyyyyyyyyyyyyyyyyy"
+{% endif %}
+slack_username_override: "elastalert"
+slack_msg_color: warning

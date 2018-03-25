@@ -1,0 +1,61 @@
+filebeat.prospectors:
+- input_type: log
+  paths:
+    - /var/log/containers/main_app_dc*
+  fields:
+      appname: main_app_dc
+      logsource: app
+  fields_under_root: true
+  symlinks: true
+  json.keys_under_root: true
+  json.add_error_key: true
+
+- input_type: log
+  paths:
+    - /var/log/containers/main_app_worker_dc*
+  fields:
+      appname: main_app_worker_dc
+      logsource: app
+  fields_under_root: true
+  symlinks: true
+  json.keys_under_root: true
+  json.add_error_key: true
+ 
+- input_type: log
+  paths:
+    - /var/log/containers/deploy*
+  fields:
+      appname: deploy
+      logsource: app
+  fields_under_root: true
+  symlinks: true
+  json.keys_under_root: true
+  json.add_error_key: true
+  
+  
+- input_type: log
+  paths:
+    - /var/log/containers/cronjob2*
+  fields:
+      appname: cronjob2
+      logsource: app
+  fields_under_root: true
+  symlinks: true
+  json.keys_under_root: true
+  json.add_error_key: true
+  
+- input_type: log
+  paths:
+    - /var/log/containers/cronjob1*
+  fields:
+      appname: cronjob1
+      logsource: app
+  fields_under_root: true
+  symlinks: true
+  json.keys_under_root: true
+  json.add_error_key: true
+  
+output.logstash:
+  hosts: ["elk01.projectname:5044"]
+  bulk_max_size: 1024
+  ssl.certificate_authorities: ["/etc/pki/tls/certs/logstash-forwarder.crt"]

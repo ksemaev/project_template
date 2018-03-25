@@ -1,0 +1,59 @@
+<source>
+  @type secure_forward
+  shared_key FLUENTD_projectname
+  self_hostname elk01.projectname
+
+  secure yes
+
+  ca_cert_path /etc/td-agent/CA/ca_cert.pem
+  ca_private_key_path /etc/td-agent/CA/ca_key.pem
+  ca_private_key_passphrase projectname
+</source>
+
+<match origin-**>
+  @type copy
+  <store>
+    @type elasticsearch
+    host localhost
+    port 9200
+    include_tag_key true
+    tag_key @log_name
+
+    logstash_prefix openshift
+    logstash_format true
+
+    flush_interval 10s
+  </store>
+</match>
+
+<match nginx>
+  @type copy
+  <store>
+    @type elasticsearch
+    host localhost
+    port 9200
+    include_tag_key true
+    tag_key @log_name
+
+    logstash_prefix nginx
+    logstash_format true
+
+    flush_interval 10s
+  </store>
+</match>
+
+<match postgres>
+  @type copy
+  <store>
+    @type elasticsearch
+    host localhost
+    port 9200
+    include_tag_key true
+    tag_key @log_name
+
+    logstash_prefix postgres
+    logstash_format true
+
+    flush_interval 10s
+  </store>
+</match>

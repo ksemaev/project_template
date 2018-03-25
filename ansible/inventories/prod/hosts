@@ -1,0 +1,50 @@
+#### Groups #####
+[projectname-all:children]
+projectname-vms
+projectname-openshift
+
+[projectname-vms:children]
+projectname-nginx
+projectname-elk
+projectname-db
+
+[projectname-dns:children]
+projectname-nginx
+
+[projectname-openshift:children]
+projectname-openshift-master
+projectname-openshift-nodes
+
+[projectname-ops:children]
+projectname-ops-pgpool
+projectname-ops-nginx
+
+[projectname-ops-pgpool:children]
+projectname-openshift-nodes
+
+[projectname-ops-nginx:children]
+projectname-openshift-nodes
+
+
+#### Hosts #####
+[projectname-openshift-master]
+opsmaster01.projectname ansible_host=10.10.20.201 fluentd_config=fluentd_openshift_master
+
+[projectname-openshift-nodes]
+opsnode01.projectname  ansible_host=10.10.20.211 filebeat_config=filebeat_openshift_nodes fluentd_config=fluentd_openshift_nodes
+opsnode02.projectname  ansible_host=10.10.20.212 filebeat_config=filebeat_openshift_nodes fluentd_config=fluentd_openshift_nodes
+opsnode03.projectname  ansible_host=10.10.20.213 filebeat_config=filebeat_openshift_nodes fluentd_config=fluentd_openshift_nodes
+opsnode04.projectname  ansible_host=10.10.20.214 filebeat_config=filebeat_openshift_nodes fluentd_config=fluentd_openshift_nodes
+opsnode05.projectname  ansible_host=10.10.20.215 filebeat_config=filebeat_openshift_nodes fluentd_config=fluentd_openshift_nodes
+opsnode06.projectname  ansible_host=10.10.20.216 filebeat_config=filebeat_openshift_nodes fluentd_config=fluentd_openshift_nodes
+
+[projectname-nginx]
+nginx01.projectname  ansible_host=10.10.20.10 filebeat_config=filebeat_nginx
+nginx02.projectname  ansible_host=10.10.20.11 filebeat_config=filebeat_nginx
+
+[projectname-elk]
+elk01.projectname  ansible_host=10.10.20.99 fluentd_config=td-agent_elk01
+
+[projectname-db]
+dbmaster.projectname ansible_host=10.10.20.102 filebeat_config=filebeat_postgres
+dbslave.projectname ansible_host=10.10.20.103 filebeat_config=filebeat_postgres

@@ -1,0 +1,10 @@
+---
+- name: Configure hosts file
+  copy:
+    src: "hosts.{{ stand }}"
+    dest: /etc/hosts
+    mode: 0644
+
+- service:
+    name: dnsmasq
+    state: restarted

@@ -1,0 +1,19 @@
+---
+# This playbook creates dc for openshift
+- hosts: "{{ target }}-master"
+  roles:
+    - name: Ops_pre_pull
+      images:
+        - "{{ image }}"
+
+- hosts: "{{ target }}-nodes"
+  roles:
+    - name: Opspull
+      images:
+        - "{{ image }}"
+
+- hosts: "{{ target }}-master"
+  roles:
+    - name: Opsdeploy
+      dc:
+        - "{{ dc }}"

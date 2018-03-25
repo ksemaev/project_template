@@ -1,0 +1,21 @@
+filebeat.prospectors:
+- input_type: log
+  paths:
+    - /var/log/nginx/*.log
+  fields:
+    application: nginx
+    logsource: front
+  fields_under_root: true
+  
+- input_type: log
+  paths:
+    - /var/log/dnsmasq.log
+  fields:
+    application: dnsmasq
+    logsource: dnsmasq
+  fields_under_root: true
+
+output.logstash:
+  hosts: ["elk01.projectname:5044"]
+  bulk_max_size: 1024
+  ssl.certificate_authorities: ["/etc/pki/tls/certs/logstash-forwarder.crt"]

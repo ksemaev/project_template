@@ -1,0 +1,32 @@
+---
+actions:
+  1:
+    action: delete_indices_openshift
+    description: Delete openshift indices where that date is older than 1 week
+    options:
+      ignore_empty_list: True
+    filters:
+      - filtertype: pattern
+        kind: prefix
+        value: openshift-
+      - filtertype: age
+        source: name
+        direction: older
+        timestring: '%Y.%m.%d'
+        unit: days
+        unit_count: 7
+  2:
+    action: delete_indices_dnsmasq
+    description: Delete dnsmasq indices where that date is older than 1 week
+    options:
+      ignore_empty_list: True
+    filters:
+      - filtertype: pattern
+        kind: prefix
+        value: dnsmasq-
+      - filtertype: age
+        source: name
+        direction: older
+        timestring: '%Y.%m.%d'
+        unit: days
+        unit_count: 7

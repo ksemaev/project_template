@@ -1,0 +1,30 @@
+---
+  - name: Copy syslog filter config
+    copy:
+      src: 10-syslog-filter.conf
+      dest: /etc/logstash/conf.d/10-syslog-filter.conf
+      mode: 0644
+
+  - name: Copy json filter config
+    copy:
+      src: 20-json-filter.conf
+      dest: /etc/logstash/conf.d/20-json-filter.conf
+      mode: 0644
+
+  - name: Copy mutate filter config
+    copy:
+      src: 25-mutate-filter.conf
+      dest: /etc/logstash/conf.d/25-mutate-filter.conf
+      mode: 0644
+
+  - name: Copy output config
+    copy:
+      src: 30-elasticsearch-output.conf
+      dest: /etc/logstash/conf.d/30-elasticsearch-output.conf
+      mode: 0644
+
+  - name: restart logstash service
+    service:
+      name: logstash
+      enabled: yes
+      state: restarted

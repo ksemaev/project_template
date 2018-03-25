@@ -1,0 +1,41 @@
+---
+#Create jobs
+- name: Get jobs from templates
+  template:
+    src: "{{ item }}_job.yaml.j2"
+    dest: /tmp/{{ item }}_job.yaml
+  with_items:
+    - "{{ job }}"
+
+- name: create new jobs
+  shell: oc create -f /tmp/{{ item }}_job.yaml -n projectname
+  with_items:
+    - "{{ job }}"
+
+- name: wait for jobs
+  shell: oc get jobs -n projectname | grep {{ job }} | tail -n 1 | awk '{print $3}'
+  register: result
+  until: result.stdout.find("1") != -1
+  retries: 20
+  delay: 10
+  with_items:
+    - "{{ job }}"
+  ignore_errors: yes
+
+- name: get logs from jobs
+  shell: oc logs jobs/{{ item }} -n projectname
+  with_items:
+    - "{{ job }}"
+  register: REV  
+  
+- name: "Filtering out stdout"
+  set_fact:
+     out: "{{ out | default([]) + [item.stdout_lines] }}"
+  with_items:
+    - "{{ REV.results }}"
+  no_log: yes
+
+- debug:
+    var: "{{ item }}"
+  with_items:
+    - "{{ out }}"

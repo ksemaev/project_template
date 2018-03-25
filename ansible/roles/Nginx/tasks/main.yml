@@ -1,0 +1,16 @@
+---
+- name: Copy nginx config to stand
+  copy:
+    src: nginx.conf
+    dest: /etc/nginx/
+    backup: yes
+  notify:
+    - reload nginx configuration
+
+- name: Cope site.conf to stand
+  template:
+    src: site.conf.j2
+    dest: /etc/nginx/conf.d/site.conf
+    backup: yes
+  notify:
+    - reload nginx configuration

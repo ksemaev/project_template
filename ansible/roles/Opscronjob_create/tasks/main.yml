@@ -1,0 +1,13 @@
+---
+#Сreate cronjobs
+- name: Get cronjobs from templates
+  template:
+    src: "{{ item }}_job.yaml.j2"
+    dest: /tmp/{{ item }}_job.yaml
+  with_items:
+    - "{{ cronjob }}"  
+
+- name: create new cronjobs
+  shell: oc create -f /tmp/{{ item }}_job.yaml -n projectname
+  with_items:
+    - "{{ cronjob }}"  

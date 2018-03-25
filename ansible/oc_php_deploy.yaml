@@ -1,0 +1,40 @@
+---
+# This playbook redeploys main app in openshift
+- hosts: "{{ target }}-master"
+  roles:
+    - name: Ops_pre_pull
+      images:
+        - main_app
+        - main_app_main_app_worker_dc
+
+- hosts: "{{ target }}-nodes"
+  roles:
+    - name: Opspull
+      serial: 1
+      images:
+        - main_app
+        - main_app_main_app_worker_dc
+
+- hosts: "{{ target }}-master"
+  roles:
+    - name: Opsjob_remove
+      job:
+        - deployjob
+    - name: Opscronjob_remove
+      cronjob:
+        - cronjob1
+        - cronjob2
+    - name: Opsdeploy
+      dc:
+        - main_app_dc
+    - name: Opsjob_create
+      job:
+        - deployjob
+    - name: Opsdeploy
+      dc:
+        - main_app_worker_dc
+    - name: Opscronjob_create
+      cronjob:
+        - cronjob1
+        - cronjob2
+    - name: Crontab

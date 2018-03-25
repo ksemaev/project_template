@@ -1,0 +1,6 @@
+---
+#This playbook replaces elastalert rules server config config
+
+- hosts: projectname-elk
+  roles:
+    - name: Elastalert

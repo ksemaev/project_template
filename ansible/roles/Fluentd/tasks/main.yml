@@ -1,0 +1,12 @@
+---
+  - name: Copy fluentd config
+    copy:
+      src: "{{ fluentd_config }}"
+      dest: /etc/td-agent/td-agent.conf
+      mode: 0644
+
+  - name: restart fluentd service
+    service:
+      name: td-agent
+      enabled: yes
+      state: restarted

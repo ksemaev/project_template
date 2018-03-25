@@ -1,0 +1,21 @@
+127.0.0.1       localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1             localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+#all hostnames.
+10.10.10.10 nginx01.projectname nginx01
+10.10.10.11 nginx02.projectname nginx02
+10.10.10.99 elk01.projectname elk01
+10.10.10.102 dbmaster.projectname dbmaster
+10.10.10.103 dbslave.projectname dbslave
+10.10.10.160 jenkins.projectname jenkins
+10.10.10.111 zabbix.projectname zabbix
+10.10.10.201 opsmaster.projectname opsmaster
+10.10.10.211 opsnode01.projectname opsnode01
+10.10.10.212 opsnode02.projectname opsnode02
+10.10.10.213 opsnode03.projectname opsnode03
+10.10.10.214 opsnode04.projectname opsnode04
+
+#External hostnames
+10.10.10.213 metrics.projectname
+10.10.10.213 api.nginx.projectname
+10.10.10.99 elasticsearch

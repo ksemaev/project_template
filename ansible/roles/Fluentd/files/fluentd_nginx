@@ -1,0 +1,29 @@
+<source>
+  @type systemd
+  tag nginx
+  path /var/log/journal
+  filters [{ "_SYSTEMD_UNIT": "nginx.service", "PRIORITY": [0,1,2,3,4,5,6] }]
+  read_from_head true
+  <storage>
+    @type local
+    persistent false
+    path /etc/td-agent/storage/nginx.pos
+  </storage>
+  <entry>
+    field_map {"MESSAGE": "message", "_HOSTNAME": "hostname", "PRIORITY": "priority"}
+  </entry>
+</source>
+
+<match *.**>
+  @type secure_forward
+  shared_key FLUENTD_projectname
+  self_hostname "#{Socket.gethostname}"
+
+  secure yes
+  enable_strict_verification yes
+  ca_cert_path /etc/td-agent/ca_cert.pem
+
+  <server>
+    host elk01.projectname
+  </server>
+</match>

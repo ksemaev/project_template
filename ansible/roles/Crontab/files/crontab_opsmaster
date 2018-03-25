@@ -1,0 +1,9 @@
+#Ansible: remove old docker images
+30 2 * * * root /usr/bin/docker rmi $(docker images -f "dangling=true" -q) > /dev/null
+
+#Ansible: remove unneeded jobs
+*/10 * * * *  root /usr/bin/oc delete job -l parent=cronjob1cron -n projectname > /dev/null
+0 6 */3 * *  root /usr/bin/oc delete job -l parent=cronjob2cron -n projectname > /dev/null
+
+#Remove unnneded dc
+* */3 * * * root /usr/bin/oadm prune deployments --orphans --keep-complete=3 --keep-failed=0 --keep-younger-than=60m --confirm

@@ -1,0 +1,24 @@
+---
+- name: docker copy images
+  copy:
+    src: /tmp/{{ item }}_{{ tag_name }}.tar
+    dest: /tmp/{{ item }}_{{ tag_name }}.tar
+  with_items:
+    - "{{ images }}"
+
+- name: docker load
+  shell: "docker load < /tmp/{{ item }}_{{ tag_name }}.tar"
+  with_items:
+    - "{{ images }}"
+
+- name: login to registry
+  docker_login:
+    registry: dockerhub.dks.company.ru:5000
+    username: openshift.projectname
+    password: xxxxxxxxxxxxxxxx
+    reauthorize: no
+
+- name: docker pull
+  shell: "docker pull dockerhub.dks.company.ru:5000/projectname/{{ item }}:{{ tag_name }}"
+  with_items:
+    - "{{ images }}"

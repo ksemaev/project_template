@@ -1,0 +1,8 @@
+---
+#This playbook replaces ELK server config config
+
+- hosts: projectname-elk
+  roles:
+    - name: Fluentd
+    - name: Curator
+    - name: Logstash

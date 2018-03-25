@@ -1,0 +1,5 @@
+---
+- name: Nginx reconfigure
+  hosts: "{{ target }}"
+  roles:
+    - Nginx

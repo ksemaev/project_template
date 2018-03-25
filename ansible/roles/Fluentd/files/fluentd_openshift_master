@@ -1,0 +1,89 @@
+<source>
+  @type systemd
+  tag origin-master
+  path /var/log/journal
+  filters [{ "_SYSTEMD_UNIT": "origin-master.service"}]
+  read_from_head true
+  <storage>
+    @type local
+    persistent false
+    path /etc/td-agent/storage/origin-master.pos
+  </storage>
+  <entry>
+    field_map {"MESSAGE": "message", "_HOSTNAME": "hostname", "PRIORITY": "priority", "_SYSTEMD_UNIT": "systemd_unit"}
+    field_map_strict true
+    fields_strip_underscores true
+    fields_lowercase true
+  </entry>
+</source>
+
+<source>
+  @type systemd
+  tag origin-master-api
+  path /var/log/journal
+  filters [{ "_SYSTEMD_UNIT": "origin-master-api.service"}]
+  read_from_head true
+  <storage>
+    @type local
+    persistent false
+    path /etc/td-agent/storage/origin-master-api.pos
+  </storage>
+  <entry>
+    field_map {"MESSAGE": "message", "_HOSTNAME": "hostname", "PRIORITY": "priority", "_SYSTEMD_UNIT": "systemd_unit"}
+    field_map_strict true
+    fields_strip_underscores true
+    fields_lowercase true
+  </entry>
+</source>
+
+<source>
+  @type systemd
+  tag origin-master-controllers
+  path /var/log/journal
+  filters [{ "_SYSTEMD_UNIT": "origin-master-controllers.service"}]
+  read_from_head true
+  <storage>
+    @type local
+    persistent false
+    path /etc/td-agent/storage/origin-master-controllers.pos
+  </storage>
+  <entry>
+    field_map {"MESSAGE": "message", "_HOSTNAME": "hostname", "PRIORITY": "priority", "_SYSTEMD_UNIT": "systemd_unit"}
+    field_map_strict true
+    fields_strip_underscores true
+    fields_lowercase true
+  </entry>
+</source>
+
+<source>
+  @type systemd
+  tag origin-node
+  path /var/log/journal
+  filters [{ "_SYSTEMD_UNIT": "origin-node.service"}]
+  read_from_head true
+  <storage>
+    @type local
+    persistent false
+    path /etc/td-agent/storage/origin-node.pos
+  </storage>
+  <entry>
+    field_map {"MESSAGE": "message", "_HOSTNAME": "hostname", "PRIORITY": "priority", "_SYSTEMD_UNIT": "systemd_unit"}
+    field_map_strict true
+    fields_strip_underscores true
+    fields_lowercase true
+  </entry>
+</source>
+
+<match origin-**>
+  @type secure_forward
+  shared_key FLUENTD_projectname
+  self_hostname "#{Socket.gethostname}"
+
+  secure yes
+  enable_strict_verification yes
+  ca_cert_path /etc/td-agent/ca_cert.pem
+
+  <server>
+    host elk01.projectname
+  </server>
+</match>

@@ -1,0 +1,13 @@
+filebeat.prospectors:
+- input_type: log
+  paths:
+    - /u03/pg_log/*.log
+  fields:
+    application: postgres
+    logsource: database
+  fields_under_root: true
+    
+output.logstash:
+  hosts: ["elk01.projectname:5044"]
+  bulk_max_size: 1024
+  ssl.certificate_authorities: ["/etc/pki/tls/certs/logstash-forwarder.crt"]

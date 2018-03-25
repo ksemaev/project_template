@@ -1,0 +1,74 @@
+##########################################
+# upstream config
+##########################################
+{% if stand == 'prod': %}
+{% set  backend_api_apps_ = ["10.10.20.215:80", "10.10.20.216:80"] %}
+{% elif stand == 'preprod': %}
+{% set  backend_api_apps_ = ["10.10.10.213:80", "10.10.10.214:80"] %}
+{% endif %}
+upstream api-apps {
+{% for backend in backend_api_apps_ %}
+    server {{ backend }};
+{% endfor %}
+}
+
+
+##########################################
+# redirect to https
+##########################################
+server {
+    listen 80;
+{% if stand == 'prod': %}
+    server_name projectname.biz;
+{% elif stand == 'preprod': %}
+    server_name api.preprod.project.projectname.biz;
+{% endif %}
+
+    location / {
+        proxy_set_header Host $host;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        X-Forwarded-Proto $scheme;
+        add_header Referer $http_referer;
+        return 301 https://$host$request_uri;
+    }
+}
+
+
+##########################################
+# api config
+##########################################
+server {
+    listen       443 ssl http2 default_server;
+{% if stand == 'prod': %}
+    server_name projectname.biz;
+	ssl_certificate "/etc/nginx/certs/chain.crt";
+    ssl_certificate_key "/etc/nginx/certs/private.key";
+    ssl_dhparam /etc/nginx/certs/dhparams.pem;
+{% elif stand == 'preprod': %}
+    server_name api.preprod.project.projectname.biz;
+	ssl_certificate "/var/lib/acme/live/api.preprod.project.projectname.biz/fullchain";
+    ssl_certificate_key "/var/lib/acme/live/api.preprod.project.projectname.biz/privkey";
+{% endif %}
+
+    ssl_prefer_server_ciphers   on;
+    ssl_ciphers 'ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA';
+    ssl_session_cache shared:SSL:50m;
+    ssl_session_timeout 5m;
+
+    location /project {
+        proxy_set_header Host api.nginx.projectname;
+        proxy_pass http://api-apps;
+    }
+
+{% if stand == 'prod': %}
+    location / {
+        proxy_set_header Host $host;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        X-Forwarded-Proto $scheme;
+        add_header Referer $http_referer;
+        proxy_pass $scheme://195.195.195.195;
+    }
+{% endif %}
+}

@@ -1,0 +1,12 @@
+---
+  - name: Copy filebeat config
+    copy:
+      src: "{{ filebeat_config }}.yml"
+      dest: /etc/filebeat/filebeat.yml
+      mode: 0600
+
+  - name: restart filebeat service
+    service:
+      name: filebeat
+      enabled: yes
+      state: restarted

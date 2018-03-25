@@ -1,0 +1,23 @@
+---
+  - name: Copy curator config
+    copy:
+      src: curator.yaml
+      dest: /root/.curator/curator.yaml
+      mode: 0644
+
+  - name: Copy scenaries
+    copy:
+      src: "{{ item }}"
+      dest: "/opt/elasticsearch-curator/{{ item }}"
+    with_items:
+      - delete_indices_openshift.yaml
+
+  - name: Create cronjob
+    cron:
+      name: "curator jobs {{ item }}" 
+      minute: 0
+      hour: 3
+      user: root
+      job: "/usr/bin/curator /opt/elasticsearch-curator/{{ item }}"
+    with_items:
+      - delete_indices_openshift.yaml

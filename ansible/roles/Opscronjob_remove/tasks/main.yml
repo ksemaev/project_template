@@ -1,0 +1,13 @@
+---
+#Remove cronjobs
+- name: delete old cronjobs
+  shell: oc delete cronjobs {{ item }} -n projectname
+  with_items:
+    - "{{ cronjob }}"
+  ignore_errors: yes
+ 
+- name: delete old jobs from cronjobs
+  shell: oc delete jobs -l parent={{ item }}cron -n projectname
+  with_items:
+    - "{{ cronjob }}"
+  ignore_errors: yes

@@ -1,0 +1,7 @@
+---
+#Remove jobs
+- name: delete old jobs
+  shell: oc delete jobs {{ item }} -n projectname
+  with_items:
+    - "{{ job }}"
+  ignore_errors: yes

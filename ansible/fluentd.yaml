@@ -1,0 +1,6 @@
+---
+#This playbook replaces filebeat config
+
+- hosts: "{{ target }}"
+  roles:
+    - name: Fluentd
