@@ -2,17 +2,17 @@
 #Prepare master
 - name: login to registry
   docker_login:
-    registry: dockerhub.dks.company.ru:5000
+    registry: dockerhub.company.ru:5000
     username: openshift.projectname
     password: xxxxxxxxxxxxxxxxxx
     reauthorize: no
 
 - name: docker pull
-  shell: "docker pull dockerhub.dks.company.ru:5000/projectname/{{ item }}:{{ tag_name }}"
+  shell: "docker pull dockerhub.company.ru:5000/projectname/{{ item }}:{{ tag_name }}"
   with_items:
     - "{{ images }}"
 
 - name: docker save
-  shell: "docker save dockerhub.dks.company.ru:5000/projectname/{{ item }}:{{ tag_name }} > /tmp/{{ item }}_{{ tag_name }}.tar"
+  shell: "docker save dockerhub.company.ru:5000/projectname/{{ item }}:{{ tag_name }} > /tmp/{{ item }}_{{ tag_name }}.tar"
   with_items:
     - "{{ images }}"

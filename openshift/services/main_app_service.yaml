@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: main_app
+  namespace: project
+spec:
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    port: 9000
+    targetPort: 9000
+  selector:
+    app: main_app
+status:
+  loadBalancer: {}

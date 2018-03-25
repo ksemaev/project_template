@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Route
+metadata:
+  name: int-nginx
+  namespace: project
+spec:
+  host: api.nginx.project
+  to:
+    kind: Service
+    name: nginx
+  wildcardPolicy: None

@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  name: main_app_worker-deploy
+  namespace: project
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: main_app_worker
+    spec:
+       containers:
+       - env:
+           - name: SYMFONY_ENV
+             value: {{ stand }}
+           - name: TZ
+             value: UTC
+         name: main_app_workerpod
+         image: dockerhub.company.ru:5000/project/projectname_main_app_worker:latest
+         resources:
+           requests:
+             cpu: 50m 
+             memory: 200Mi 
+           limits:
+             cpu: 100m 
+             memory: 500Mi
+         volumeMounts:
+           - name: main_app_worker-vol1
+             mountPath: /projectname/app/Resources
+       volumes:
+       - name: main_app_worker-vol1
+         persistentVolumeClaim:
+           claimName:  main_app_worker-pvc             
+       nodeSelector:
+         dedicate: app

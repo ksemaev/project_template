@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  name: main_app-deploy
+  namespace: project
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: main_app
+    spec:
+       containers:
+       - env:
+           - name: SYMFONY_ENV
+             value: {{ stand }}
+           - name: TZ
+             value: UTC
+         name: phppod
+		 image: "dockerhub.company.ru:5000/project/projectname_php_fpm:{{ tag_name }}"
+         livenessProbe:
+            exec:
+              command:
+                - /usr/bin/cgi-fcgi
+                - '-bind'
+                - '-connect'
+                - '127.0.0.1:9000'
+            failureThreshold: 3
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+         readinessProbe:
+            exec:
+              command:
+                - /usr/bin/cgi-fcgi
+                - '-bind'
+                - '-connect'
+                - '127.0.0.1:9000'
+            failureThreshold: 3
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+         resources:
+           requests:
+             cpu: 100m 
+             memory: 300Mi 
+           limits:
+             cpu: 200m 
+             memory: 500Mi 
+         ports:
+         - containerPort: 9000
+           protocol: TCP
+         volumeMounts:
+           - name: main_app-vol1
+             mountPath: /projectname/app/Resources
+       volumes:
+       - name: main_app-vol1
+         persistentVolumeClaim:
+           claimName:  main_app-pvc
+       nodeSelector:
+         develop: dev

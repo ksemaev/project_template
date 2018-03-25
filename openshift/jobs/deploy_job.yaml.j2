@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: deploy
+spec:
+  template:
+    metadata:
+      name: deployjob  
+    spec:
+      containers:
+      - name: deploypod
+        image: "dockerhub.company.ru:5000/project/projectname_php_fpm:{{ tag_name }}"
+        command: ["/projectname/deploy.{{ stand }}.sh"]
+        env:
+          - name: SYMFONY_ENV
+            value: "{{ symphony }}"
+      restartPolicy: OnFailure

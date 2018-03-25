@@ -1,0 +1,23 @@
+apiVersion: batch/v2alpha1
+kind: CronJob
+metadata:
+  name: cronjob2
+spec:
+  schedule: "40 1 * * *"
+  jobTemplate:             
+    spec:
+      activeDeadlineSeconds: 300
+      template:
+        metadata:
+          labels:          
+            parent: "cronjob2cron"
+        spec:
+          containers:
+          - name: cronjob2pod
+            image: "dockerhub.company.ru:5000/project/projectname_php_fpm:{{tag_name}}"
+            command: ["php", "/projectname/bin/console", "app:expired:block"]
+            env:
+            - name: SYMFONY_ENV
+              value: "{{symphony}}"
+          restartPolicy: OnFailure
+  concurrencyPolicy: Forbid

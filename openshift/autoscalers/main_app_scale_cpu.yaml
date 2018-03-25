@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: main_app-cpu
+spec:
+  scaleRef:
+    kind: DeploymentConfig 
+    name: main_app-deploy
+    apiVersion: v1 
+    subresource: scale
+  minReplicas: 2 
+  maxReplicas: 10 
+  cpuUtilization:
+    targetPercentage: 80
