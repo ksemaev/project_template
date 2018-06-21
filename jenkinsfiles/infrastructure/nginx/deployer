@@ -1,0 +1,35 @@
+#!/usr/bin/env groovy
+
+pipeline {
+    agent { 
+		label 'master'
+		}
+	options {
+		buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '15'))
+		timestamps()
+	}
+	parameters {
+		choice(
+			name: 'STAND',
+			choices: "\npreprod\nprod",
+			description: "Укажите стенд для деплоя"
+		)
+	}
+    stages {
+        stage("Deploy") {
+			steps {
+				script {
+					if ( params.STAND == 'prod' ) {
+						build job: 'tasks/nginx_prod'
+						currentBuild.description = "Запускается деплой nginx на прод"
+					} else if ( params.STAND == 'preprod' ) {
+						build job: 'tasks/nginx_preprod'
+						currentBuild.description = "Запускается деплой nginx на препрод"
+					} else {
+						error 'Стенд не выбран'
+					}
+				}
+			}
+		}
+	}
+}

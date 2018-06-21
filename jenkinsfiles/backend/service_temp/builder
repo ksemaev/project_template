@@ -1,0 +1,149 @@
+#!groovy
+// Build service_temp docker image
+properties([disableConcurrentBuilds()])
+
+pipeline {
+    agent { 
+		label 'master'
+	}
+	options {
+		buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '15'))
+		timestamps()
+	}
+	parameters {
+		choice(
+			name: 'TAG',
+			choices: "latest",
+			description: "Укажите образ для сборки"
+		)
+	} 
+    stages {
+		stage("Preparations") {
+			steps {
+				script {
+					deleteDir() /* clean up our workspace */
+					if ( params.TAG == "release" ) {
+						slackSend channel: '#jenkins-releases',
+							color: 'good',
+							message: "Началась сборка release-образа service_temp из ветки master ${env.BUILD_URL}"
+					} else {
+						slackSend channel: '#jenkins',
+							color: 'good',
+							message: "Началась сборка latest-образа service_temp из ветки develop ${env.BUILD_URL}"
+					}
+				}	
+			}
+		}
+        stage("Pull repository") {
+            steps {
+				script {
+					if ( params.TAG == "release" ) {
+						git(url: 'git@gitlab.company.ru:projectname/service_temp.git',
+							credentialsId: 'projectname1_git',
+							branch: 'master')
+						currentBuild.description = "Выкачана ветка master, "
+						echo " =========== Выкачана ветка master репозитория service_temp"						
+					}
+					else if ( params.TAG == "latest" ) {
+						git(url: 'git@gitlab.company.ru:projectname/service_temp.git',
+							credentialsId: 'projectname1_git',
+							branch: 'develop')
+						currentBuild.description = "Выкачана ветка develop, "
+						echo " =========== Выкачана ветка develop репозитория service_temp"
+					}
+					else {
+						error 'Не вижу такого тега'
+					}
+				}	
+            }
+        }
+        stage("Build image") {
+            steps {
+			    script {
+					if ( params.TAG == "release" ) {
+						sh """
+						echo "(function (window) {window.__env = window.__env || {};window.__env.apiUrl = 'https://projectname.biz/repo/public/v1/';window.__env.oauthUrl = 'https://projectname.biz/repo/public/authorization';window.__env.oauthCredentials = {'client_id': '1do9azyoi7ogcg8c800o00wswsk80woko084kokk0oo4kwg0wk','client_secret': '10kugb3flm0gooscsw4okw4sgw0gwwkokkkoo48ogscogsgkok','grant_type': 'client_credentials'};window.__env.busClientValidatorPass = '5eed1fec25b54394acc8a7b8762260d0';}(this));" > ./env.prod.js
+						chmod +x entrypoint.sh
+						docker build -t dockerhub.company:5000/projectname/repo_service_temp:release .
+						"""
+						currentBuild.description += "собран образ repo_service_temp:release "
+						echo " =========== собран образ repo_service_temp:release"
+					}
+					else if ( params.TAG == "latest" ) {
+						sh """
+						chmod +x entrypoint.sh
+						docker build -t dockerhub.company:5000/projectname/repo_service_temp:latest .
+						"""
+						currentBuild.description += "собран образ repo_service_temp:latest "
+						echo " =========== собран образ repo_service_temp:latest"
+					}
+					else {
+						error 'Не вижу такого тега'
+					}
+				}	
+			}
+        }
+        stage("Push image") {
+            steps {
+			    script {
+					if ( params.TAG == "release" ) {
+						sh "docker push dockerhub.company:5000/projectname/repo_service_temp:release"
+						currentBuild.description += "и запушен образ repo_service_temp:release"
+						echo " =========== запушен образ repo_service_temp:release"
+					}
+					else if ( params.TAG == "latest" ) {
+					    sh "docker push dockerhub.company:5000/projectname/repo_service_temp:latest"
+						currentBuild.description += "и запушен образ repo_service_temp:latest"
+						echo " =========== запушен образ repo_service_temp:latest"
+					}	
+					else {
+						error 'Не вижу такого тега'
+					}
+				}	
+			}
+        }
+
+    }
+	post {
+		failure {
+			script {
+				if ( params.TAG == "release" ) {
+                    slackSend channel: '#jenkins-releases',
+                        color: 'danger',
+                        message: "Упала сборка release-образа service_temp из ветки master ${env.BUILD_URL}"
+                }
+                else {
+                    slackSend channel: '#jenkins',
+                        color: 'danger',
+                        message: "Упала сборка latest-образа service_temp из ветки develop ${env.BUILD_URL}"
+                }
+            }
+		}
+		aborted {
+		    script {
+		        if ( params.TAG == "release" ) {
+                    slackSend channel: '#jenkins-releases',
+                        color: 'warning',
+                        message: "Прервана сборка release-образа service_temp из ветки master ${env.BUILD_URL}"
+                } else {
+                    slackSend channel: '#jenkins',
+                        color: 'warning',
+                        message: "Прервана сборка latest-образа service_temp из ветки develop ${env.BUILD_URL}"
+                }
+            }
+		}
+		success {
+			script {
+				if ( params.TAG == "release" ) {
+					slackSend channel: '#jenkins-releases',
+						color: 'good',
+						message: "Завершена сборка release-образа service_temp из ветки master ${env.BUILD_URL}"
+				} else {
+                    slackSend channel: '#jenkins',
+                        color: 'good',
+                        message: "Завершена сборка latest-образа service_temp из ветки develop ${env.BUILD_URL}"
+				}
+			}
+		}
+	}
+}

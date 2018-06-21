@@ -1,0 +1,51 @@
+#!groovy
+// Update service_temp in develop
+properties([disableConcurrentBuilds()])
+
+pipeline {
+    agent { 
+		label 'dev'
+		}
+	options {
+		buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '15'))
+		timestamps()
+	}
+    stages {
+		stage("Preparations") {
+			steps {
+				deleteDir() /* clean up our workspace */
+			}
+		}
+        stage("Pull and start new docker") {
+            steps {
+				script {
+					sh """
+					docker stop service_temp-latest || true
+					docker rm service_temp-latest || true
+					docker pull dockerhub.company:5000/projectname/repo_service_temp:latest 
+					docker run -e "SYMFONY_ENV=dev" -p 2080:6080 -d --name service_temp-latest dockerhub.company:5000/projectname/repo_service_temp:latest
+					"""
+					currentBuild.description = "Скачан образ repo_service_temp:latest и запущен контейнер на его базе"
+					echo " =========== Скачан образ repo_service_temp:latest и запущен контейнер на его базе"
+				}
+			}
+        }
+    }
+	post {
+		failure {
+			slackSend channel: '#jenkins',
+                color: 'danger',
+                message: "Упал деплой latest-образа service_temp в develop среду! :( ${env.BUILD_URL}"
+		}
+		aborted {
+			slackSend channel: '#jenkins',
+                color: 'warning',
+                message: "Прерван деплой latest-образа service_temp в develop среду ${env.BUILD_URL}"
+		}
+		success {
+			slackSend channel: '#jenkins',
+                color: 'good',
+                message: "Завершен деплой latest-образа service_temp в develop среду ${env.BUILD_URL}"
+		}
+	}
+}

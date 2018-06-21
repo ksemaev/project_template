@@ -1,0 +1,67 @@
+#!groovy
+// Patch service_temp dc in openshft preprod
+properties([disableConcurrentBuilds()])
+
+pipeline {
+    agent { label 'preprod' }
+	options {
+		buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '15'))
+		timestamps()
+	}
+	parameters {
+		string(
+			name: 'TAG',
+			defaultValue: "release",
+			description: "Тег обрааза"
+		)
+	}
+    stages {
+		stage("Preparations") {
+			steps {
+				deleteDir() /* clean up our workspace */
+				slackSend channel: '#jenkins-releases',
+					color: 'good',
+					message: "Начался деплой новой версии образа ${params.TAG} service_temp в preproduction среду ${env.BUILD_URL}"
+			}
+		}
+        stage("Pull repository") {
+            steps {
+				script {
+					git( url: 'git@gitlab.company.ru:projectname/infra-repo.git',
+							credentialsId: 'projectname1_git',
+							branch: 'master')
+					echo " =========== Выкачана ветка master репозитория repo-docker"
+				}
+            }
+        }		
+        stage("Patch DC") {
+            steps {
+				script {
+				 ansiblePlaybook(
+						playbook: 'ansible/oc_dc_patch.yaml',
+						inventory: "ansible/inventories/preprod/hosts",
+						extras: "-e target=projectname-openshift -e tag_name=${params.TAG} -e image=repo_service_temp -e dc=service_temp")
+					currentBuild.description = "патч repo_service_temp:${params.TAG}"
+					echo " =========== Запущен плейбук патча repo_service_temp:${params.TAG} на стенде preprod"
+				}
+			}
+        }
+    }
+	post {
+		failure {
+			slackSend channel: '#jenkins-releases',
+                color: 'danger',
+                message: "Упал деплой новой версии образа ${params.TAG} service_temp в preproduction среду! :( ${env.BUILD_URL}"
+		}
+		aborted {
+			slackSend channel: '#jenkins-releases',
+                color: 'warning',
+                message: "Прерван деплой новой версии образа ${params.TAG} service_temp в preproduction среду ${env.BUILD_URL}"
+		}
+		success {
+			slackSend channel: '#jenkins-releases',
+                color: 'good',
+                message: "Завершен деплой новой версии образа ${params.TAG} service_temp в preproduction среду ${env.BUILD_URL}"
+		}
+	}
+}

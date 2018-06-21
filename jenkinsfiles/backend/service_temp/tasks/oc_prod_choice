@@ -1,0 +1,48 @@
+#!/usr/bin/env groovy
+// Choose to patch or to rollout
+
+pipeline {
+    agent { 
+		label 'prod'
+		}
+	options {
+		buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
+		timestamps()
+	}
+	parameters {
+		string(
+				name: 'NEWTAG',
+				defaultValue: "release",
+				description: "Установить из тега:"
+		)
+	}
+    stages {
+        stage("Choose role version") {
+            steps {
+                script {
+					// get current deploy version
+					sh "oc describe dc/service_temp -n projectname | grep Image | cut -d':' -f4 | tr -d '\n' > ${WORKSPACE}/current_version.txt"
+					env.CURRENT = readFile (file: "${WORKSPACE}/current_version.txt")
+					echo " +++++++++++++++++++++++++++++++++++++++++"
+					echo "Current version is: ${env.CURRENT}"		
+					echo "Choosen version is: ${params.NEWTAG}"		
+                    echo " +++++++++++++++++++++++++++++++++++++++++"
+					
+					
+					
+					if ( params.NEWTAG == env.CURRENT ) {
+                         build job: "oc_prod_deployer",
+                         parameters:  [string(name: 'TAG', value: params.NEWTAG)]
+                         currentBuild.description = "Запускается редеплой в среду PROD"
+                         echo " =========== Запускается редеплой на стенд PROD"
+                     } else {
+                         build job: "oc_prod_patcher",
+                         parameters:  [string(name: 'TAG', value: params.NEWTAG)]
+                         currentBuild.description = "Запускается патч в среду PROD"
+                         echo " =========== Запускается патч на стенд PROD"
+					}
+				}
+			}
+		}
+	}
+}

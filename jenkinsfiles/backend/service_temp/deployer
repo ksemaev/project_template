@@ -1,0 +1,72 @@
+#!/usr/bin/env groovy
+// Deploy service_temp
+
+pipeline {
+    agent { 
+		label 'master'
+		}
+	options {
+		buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '15'))
+		timestamps()
+	}
+	parameters {
+		choice(
+			name: 'STAND',
+			choices: "\ntest\ndev\npreprod\nprod",
+			description: "Укажите стенд для деплоя"
+		)
+	}
+    stages {
+        stage("Choose version") {
+            steps {
+                script {
+					if ( params.STAND == 'prod' || params.STAND == 'preprod' ) {
+						//get service_temp repo and show branches
+						git(url: 'git@gitlab.company.ru:projectname/service_temp.git',
+								credentialsId: 'projectname1_git',
+								branch: 'develop')
+						sh """
+						git branch -r | sed -e 's/origin\\///g' | grep 'release\\|hotfix' | tr -d ' ' | sed -e 's/\\//-/g' > ${WORKSPACE}/list
+						echo "latest" >> ${WORKSPACE}/list
+						echo "release" >> ${WORKSPACE}/list
+						"""
+	
+						// Load the list into a variable
+						env.LIST = readFile (file: "${WORKSPACE}/list")
+	
+						// Show the select input
+						env.NEWTAG = input message: 'Choose the tag for image', ok: 'Deploy!',
+								parameters: [choice(name: 'NEWTAG', choices: env.LIST, description: 'What is the tag?')]
+						echo " +++++++++++++++++++++++++++++++++++++++++"
+						echo "Chosen version is: ${env.NEWTAG}"
+					}
+                }
+            }
+        }
+        stage("Run deploy chooser") {
+            steps {
+                script {
+				    if ( params.STAND == 'dev' ) {
+						build job: "tasks/develop_deployer"
+						currentBuild.description = "Запускается деплой на стенд DEV"
+						echo " =========== Запускается деплой на стенд DEV"	
+                    } else if ( params.STAND == 'test' ) {
+						build job: "tasks/test_deployer"
+						currentBuild.description = "Запускается деплой в среду TEST"
+						echo " =========== Запускается деплой на стенд TEST"
+					} else if ( params.STAND == 'prod' ) {
+                        build job: "tasks/oc_prod_choice",
+						parameters:  [string(name: 'NEWTAG', value: env.NEWTAG)]
+                        currentBuild.description = "Выбор роли для среды PROD"
+                        echo " =========== Выбор роли для среды PROD"
+					} else if ( params.STAND == 'preprod' ) {
+                        build job: "tasks/oc_preprod_choice",
+						parameters:  [string(name: 'NEWTAG', value: env.NEWTAG)]
+                        currentBuild.description = "Выбор роли для среды PREPROD"
+                        echo " =========== Выбор роли для среды PREPROD"
+                    }
+                }
+            }
+        }
+    }
+}

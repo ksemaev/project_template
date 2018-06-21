@@ -1,0 +1,95 @@
+#!groovy
+// Build service_temp docker image
+properties([disableConcurrentBuilds()])
+
+pipeline {
+    agent { 
+		label 'master'
+	}
+	options {
+		buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
+		timestamps()
+	}
+	parameters {
+		string(
+			name: 'GIT_BRANCH',
+			defaultValue: 'tag_name_here',
+			description: "Укажите тег для сборки :release образов"
+		)
+	} 
+    stages {
+		stage("Preparations") {
+			steps {
+				deleteDir() /* clean up our workspace */
+				slackSend channel: '#jenkins-releases',
+					color: 'good',
+					message: "Началась сборка release-образов service_temp из ветки ${params.GIT_BRANCH} ${env.BUILD_URL}"
+			}
+		}
+        stage("Pull repositories") {
+            steps {
+				script {
+					sh """
+						git clone git@gitlab.company.ru:projectname/service_temp.git
+						cd service_temp
+						git checkout ${params.GIT_BRANCH}
+					"""
+					currentBuild.description = "Выкачана ветка ${params.GIT_BRANCH} репозитория service_temp, "
+					echo " =========== Выкачана ветка ${params.GIT_BRANCH} репозитория service_temp"
+				}	
+            }
+        }
+        stage("Build docker image") {
+            steps {
+				script {
+                    def DOCKER_TAG = params.GIT_BRANCH.replaceAll('/', "-")
+                    echo "Docker tag: ${DOCKER_TAG}"
+                    echo "Git branch: ${params.GIT_BRANCH}"
+					dir ('service_temp') {
+						sh """
+						chmod +x entrypoint.sh
+						docker build -t dockerhub.company:5000/projectname/repo_service_temp:release .
+						docker tag dockerhub.company:5000/projectname/repo_service_temp:release dockerhub.company:5000/projectname/repo_service_temp:${DOCKER_TAG}
+						"""
+					}
+					currentBuild.description += "docker composer отработал для release, "
+					echo " =========== docker composer отработал для release"
+				}	
+            }
+        }
+        stage("Push docker image") {
+            steps {
+				script {
+                    def DOCKER_TAG = params.GIT_BRANCH.replaceAll('/', "-")
+                    echo "Docker tag: ${DOCKER_TAG}"
+                    echo "Git branch: ${params.GIT_BRANCH}"
+					dir ('service_temp') {
+						sh """
+						docker push dockerhub.company:5000/projectname/repo_service_temp:release && \
+						docker push dockerhub.company:5000/projectname/repo_service_temp:${DOCKER_TAG}
+						"""
+					}
+					currentBuild.description += "запушены образы release, "
+					echo " =========== Запушены образы release"
+				}	
+            }
+        }
+    }
+	post {
+		failure {
+			slackSend channel: '#jenkins-releases',
+                color: 'danger',
+                message: "Упала сборка release-образов service_temp из ветки ${params.GIT_BRANCH}! :( ${env.BUILD_URL}"
+		}
+		aborted {
+			slackSend channel: '#jenkins-releases',
+                color: 'warning',
+                message: "Прервана сборка release-образов service_temp из ветки ${params.GIT_BRANCH} ${env.BUILD_URL}"
+		}
+		success {
+			slackSend channel: '#jenkins-releases',
+                color: 'good',
+                message: "Успешно завершена сборка release-образов service_temp из ветки ${params.GIT_BRANCH} ${env.BUILD_URL}"
+		}
+	}
+}

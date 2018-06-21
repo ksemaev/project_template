@@ -1,0 +1,56 @@
+#!groovy
+// Update filebeat config on prod
+properties([disableConcurrentBuilds()])
+
+pipeline {
+    agent { label 'prod' }
+	options {
+		buildDiscarder(logRotator(numToKeepStr: '5', artifactNumToKeepStr: '5'))
+		timestamps()
+	}
+	parameters {
+		choice(
+			name: 'VMS',
+			choices: "\nopsnodes\nopsmaster\nnginx\npostgres",
+			description: "Укажите машины для настройки")
+		}
+    stages {
+        stage("Preparations") {
+            steps {
+				script {
+					if ( params.VMS == 'opsnodes' ) {
+						TARGET = 'projectname-openshift-nodes'
+					} else if ( params.VMS == 'opsmaster' ) {
+						TARGET = 'projectname-openshift-master'
+					} else if ( params.VMS == 'nginx' ) {
+						TARGET = 'projectname-nginx'
+					} else if ( params.VMS == 'postgres' ) {
+						TARGET = 'projectname-db'
+					} else {
+						error 'Указанный сервис не обнаружен'
+					}
+					currentBuild.description = "Обновлен конфиг filebeat для ${params.VMS}"
+				}
+            }
+        }
+        stage("Pull repository") {
+            steps {
+				deleteDir() /* clean up our workspace */
+                git(
+					url: 'git@gitlab.company.ru:projectname/infra-repo.git',
+					credentialsId: 'projectname1_git',
+					branch: 'master'
+				)
+            }
+        }
+        stage("Run fluentd role") {
+            steps {
+				ansiblePlaybook(
+					playbook: 'ansible/filebeat.yaml',
+					inventory: 'ansible/inventories/prod/hosts',
+					extras: "-e \"target=${TARGET}\""
+				)
+			}
+        }
+    }
+}

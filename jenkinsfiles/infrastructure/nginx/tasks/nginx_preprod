@@ -1,0 +1,32 @@
+#!groovy
+// Update Nginx config on preprod
+properties([disableConcurrentBuilds()])
+
+pipeline {
+    agent { label 'preprod' }
+	options {
+		buildDiscarder(logRotator(numToKeepStr: '5', artifactNumToKeepStr: '5'))
+		timestamps()
+	}
+    stages {
+        stage("Pull repository") {
+            steps {
+				deleteDir() /* clean up our workspace */
+                git(
+					url: 'git@gitlab.company.ru:projectname/infra-repo.git',
+					credentialsId: 'projectname1_git',
+					branch: 'master'
+				)
+            }
+        }
+        stage("Redeploy DC") {
+            steps {
+				ansiblePlaybook(
+					playbook: 'ansible/nginx.yaml',
+					inventory: 'ansible/inventories/preprod/hosts',
+					extras: '-e "target=projectname-nginx"'
+				)
+			}
+        }
+    }
+}

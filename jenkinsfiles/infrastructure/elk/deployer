@@ -1,0 +1,127 @@
+#!/usr/bin/env groovy
+properties([disableConcurrentBuilds()])
+
+pipeline {
+    agent { 
+		label 'master'
+		}
+	options {
+		buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
+		timestamps()
+	}
+	parameters {
+		choice(
+			name: 'STAND',
+			choices: "\npreprod\nprod",
+			description: "Укажите стенд (обязательно)"
+		)
+		choice(
+			name: 'SERVICE',
+			choices: "\nopsnodes\nopsmaster\nnginx\npostgres",
+			description: "Укажите узлы"
+		)
+		booleanParam(
+			name: 'ELK_CONFIG',
+			defaultValue: false,
+			description: "Настроить ELK"
+		)
+		booleanParam(
+			name: 'ELASTALERT_CONFIG',
+			defaultValue: false,
+			description: "Обновить алерты"
+		)
+	}
+    stages {
+        stage("Deploy fluentd") {
+			steps {
+				script {
+					if ( params.STAND == 'preprod' ) {
+						echo "Выбран деплой в препрод"
+						currentBuild.description = "На препроде"
+						if ( params.SERVICE == 'opsnodes' ) {
+							build job: 'tasks/fluentd_preprod',
+								parameters: [[$class: 'StringParameterValue', name: 'VMS', value: 'opsnodes']]
+							build job: 'tasks/filebeat_preprod',
+								parameters: [[$class: 'StringParameterValue', name: 'VMS', value: 'opsnodes']]
+							currentBuild.description += " обновлен конфиг fluentd для opsnodes. "
+							echo "Деплоим opsnodes"
+						} else if ( params.SERVICE == 'opsmaster' ) {
+							build job: 'tasks/fluentd_preprod',	
+								parameters: [[$class: 'StringParameterValue', name: 'VMS', value: 'opsmaster']]
+							currentBuild.description += " обновлен конфиг fluentd для opsmaster. "
+							echo "Деплоим opsmaster"
+						} else if ( params.SERVICE == 'nginx' ) {
+							build job: 'tasks/filebeat_preprod',		
+								parameters: [[$class: 'StringParameterValue', name: 'VMS', value: 'nginx']]
+							currentBuild.description += " обновлен конфиг fluentd для nginx. "
+							echo "Деплоим nginx"
+						} else if ( params.SERVICE == 'postgres' ) {
+							build job: 'tasks/filebeat_preprod',	
+								parameters: [[$class: 'StringParameterValue', name: 'VMS', value: 'postgres']]
+							currentBuild.description += " обновлен конфиг fluentd для postgres. "
+							echo "Деплоим postgres"
+						}						
+					} else if ( params.STAND == 'prod' ) {
+						echo "Выбран деплой в прод"
+						currentBuild.description = "На проде"
+						if ( params.SERVICE == 'opsnodes' ) {
+							build job: 'tasks/fluentd_prod',
+								parameters: [[$class: 'StringParameterValue', name: 'VMS', value: 'opsnodes']]
+							build job: 'tasks/filebeat_prod',
+								parameters: [[$class: 'StringParameterValue', name: 'VMS', value: 'opsnodes']]
+							currentBuild.description += " обновлен конфиг fluentd для opsnodes. "
+							echo "Деплоим opsnodes"
+						} else if ( params.SERVICE == 'opsmaster' ) {
+							build job: 'tasks/fluentd_prod',
+								parameters: [[$class: 'StringParameterValue', name: 'VMS', value: 'opsmaster']]
+							currentBuild.description += " обновлен конфиг fluentd для opsmaster. "
+							echo "Деплоим opsmaster"
+						} else if ( params.SERVICE == 'nginx' ) {
+							build job: 'tasks/filebeat_prod',
+								parameters: [[$class: 'StringParameterValue', name: 'VMS', value: 'nginx']]
+							currentBuild.description += " обновлен конфиг fluentd для nginx. "
+							echo "Деплоим nginx"
+						} else if ( params.SERVICE == 'postgres' ) {
+							build job: 'tasks/filebeat_prod',
+								parameters: [[$class: 'StringParameterValue', name: 'VMS', value: 'postgres']]
+							currentBuild.description += " обновлен конфиг fluentd для postgres. "
+							echo "Деплоим postgres"
+						}						
+					} else {
+						error 'Стенд не выбран'
+					}
+				}
+			}
+		}
+        stage("Deploy elk") {
+			steps {
+				script {
+					if ( params.STAND == 'preprod' && params.ELK_CONFIG == true) {
+						echo "Выбран деплой ELK в препрод"
+						currentBuild.description += " Обновлен конфиг elk"
+						build job: 'tasks/elk_preprod'						
+					} else if ( params.STAND == 'prod' && params.ELK_CONFIG == true) {
+						echo "Выбран деплой ELK в прод"
+						currentBuild.description += " Обновлен конфиг elk"
+						build job: 'tasks/elk_prod'
+					}						
+				}
+			}
+		}
+        stage("Deploy elastalert") {
+			steps {
+				script {
+					if ( params.STAND == 'preprod' && params.ELASTALERT_CONFIG == true) {
+						echo "Выбран деплой elastalert в препрод"
+						currentBuild.description += " Обновлен конфиг elastalert"
+						build job: 'tasks/elastalert_preprod'						
+					} else if ( params.STAND == 'prod' && params.ELASTALERT_CONFIG == true) {
+						echo "Выбран деплой elastalert в прод"
+						currentBuild.description += " Обновлен конфиг elastalert"
+						build job: 'tasks/elastalert_prod'
+					}						
+				}
+			}
+		}
+	}
+}

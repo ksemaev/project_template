@@ -1,0 +1,87 @@
+#!groovy
+// Build kiosk docker image
+properties([disableConcurrentBuilds()])
+
+pipeline {
+    agent { 
+		label 'master'
+	}
+	options {
+		buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
+		timestamps()
+	}
+	parameters {
+		string(
+			name: 'GIT_RELEASE_BRANCH',
+			defaultValue: 'release/x.x.x',
+			description: "Укажите ветку для сборки :current образа"
+		)
+	} 
+    stages {
+		stage("Preparations") {
+			steps {
+				deleteDir() /* clean up our workspace */
+				slackSend channel: '#jenkins',
+					color: 'good',
+					message: "Началась сборка current-образа service_temp из ветки ${params.GIT_RELEASE_BRANCH} ${env.BUILD_URL}"
+			}
+		}
+        stage("Pull repositories") {
+            steps {
+				script {
+					sh """
+						git clone git@gitlab.company.ru:projectname/service_temp.git
+						cd service_temp
+						git checkout ${params.GIT_RELEASE_BRANCH}
+					"""
+					currentBuild.description = "Выкачана ветка ${params.GIT_RELEASE_BRANCH} репозитория service_temp, "
+					echo " =========== Выкачана ветка ${params.GIT_RELEASE_BRANCH} репозитория service_temp"
+				}	
+            }
+        }
+        stage("Build docker image") {
+            steps {
+				script {
+					dir ('service_temp') {
+						sh """
+						chmod +x entrypoint.sh
+						docker build -t dockerhub.company:5000/projectname/repo_service_temp:current .
+						"""
+					}
+					currentBuild.description += "Образ current собран, "
+					echo " =========== Образ current собран"
+				}	
+            }
+        }
+        stage("Push docker image") {
+            steps {
+				script {
+					dir ('service_temp') {
+						sh """
+						docker push dockerhub.company:5000/projectname/repo_service_temp:current
+						"""
+					}
+					currentBuild.description += "запушен образ current, "
+					echo " =========== Запушен образ current"
+				}	
+            }
+        }
+    }
+	post {
+		failure {
+			slackSend channel: '#jenkins',
+                color: 'danger',
+                message: "Упала сборка current-образа service_temp из ветки ${params.GIT_RELEASE_BRANCH}! :( ${env.BUILD_URL}"
+		}
+		aborted {
+			slackSend channel: '#jenkins',
+                color: 'warning',
+                message: "Прервана сборка current-образа service_temp из ветки ${params.GIT_RELEASE_BRANCH} ${env.BUILD_URL}"
+		}
+		success {
+			slackSend channel: '#jenkins',
+                color: 'good',
+                message: "Успешно завершена сборка current-образа service_temp из ветки ${params.GIT_RELEASE_BRANCH} ${env.BUILD_URL}"
+		}
+	}
+}

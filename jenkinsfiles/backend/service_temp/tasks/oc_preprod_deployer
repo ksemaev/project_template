@@ -1,0 +1,68 @@
+#!groovy
+// Update service_temp dc in openshft preprod
+properties([disableConcurrentBuilds()])
+
+pipeline {
+    agent { label 'preprod' }
+	options {
+		buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '15'))
+		timestamps()
+	}
+	parameters {
+		string(
+			name: 'TAG',
+			defaultValue: "release",
+			description: "Тег обрааза"
+		)
+	}
+    stages {
+		stage("Preparations") {
+			steps {
+				deleteDir() /* clean up our workspace */
+				slackSend channel: '#jenkins-releases',
+					color: 'good',
+					message: "Начался перевыпуск текущей версии образа ${params.TAG} service_temp в preproduction среду ${env.BUILD_URL}"
+			}
+		}
+        stage("Pull repository") {
+            steps {
+				script {
+					git( url: 'git@gitlab.company.ru:projectname/infra-repo.git',
+							credentialsId: 'projectname1_git',
+							branch: 'master')
+					currentBuild.description = "Выкачана ветка master, "
+					echo " =========== Выкачана ветка master репозитория repo-docker"
+				}
+            }
+        }		
+        stage("Redeploy DC") {
+            steps {
+				script {
+					ansiblePlaybook(
+						playbook: 'ansible/oc_dc_redeploy.yaml',
+						inventory: "ansible/inventories/preprod/hosts",
+						extras: "-e target=projectname-openshift -e tag_name=${params.TAG} -e image=repo_service_temp -e dc=service_temp")
+					currentBuild.description += "запущен плейбук редеплоя service_temp на стенде preprod"
+					echo " =========== Запущен плейбук редеплоя service_temp на стенде preprod"
+				}
+			}
+        }
+    }
+	post {
+		failure {
+			slackSend channel: '#jenkins-releases',
+                color: 'danger',
+                message: "Упал перевыпуск текущей версии образа ${params.TAG} service_temp в preproduction среду! :( ${env.BUILD_URL}"
+		}
+		aborted {
+			slackSend channel: '#jenkins-releases',
+                color: 'warning',
+                message: "Прерван перевыпуск текущей версии образа ${params.TAG} service_temp в preproduction среду ${env.BUILD_URL}"
+		}
+		success {
+			slackSend channel: '#jenkins-releases',
+                color: 'good',
+                message: "Завершен перевыпуск текущей версии образа ${params.TAG} service_temp в preproduction среду ${env.BUILD_URL}"
+		}
+	}
+}

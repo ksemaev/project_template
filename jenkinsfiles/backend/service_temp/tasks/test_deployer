@@ -1,0 +1,51 @@
+#!groovy
+// Update service_temp in test
+properties([disableConcurrentBuilds()])
+
+pipeline {
+    agent { 
+		label 'test'
+		}
+	options {
+		buildDiscarder(logRotator(numToKeepStr: '15', artifactNumToKeepStr: '15'))
+		timestamps()
+	}
+    stages {
+		stage("Preparations") {
+			steps {
+				deleteDir() /* clean up our workspace */
+			}
+		}
+        stage("Pull and start new docker") {
+            steps {
+				script {
+					sh """
+					docker stop service_temp-current || true
+					docker rm service_temp-current || true
+					docker pull dockerhub.company:5000/projectname/repo_service_temp:current
+					docker run -e "SYMFONY_ENV=test" -p 2080:6080 -d --name service_temp-current dockerhub.company:5000/projectname/repo_service_temp:current
+					"""
+					currentBuild.description = "Скачан образ repo_service_temp:current и запущен контейнер на его базе"
+					echo " =========== Скачан образ repo_service_temp:current и запущен контейнер на его базе"
+				}
+			}
+        }
+    }
+	post {
+		failure {
+			slackSend channel: '#jenkins',
+                color: 'danger',
+                message: "Упал деплой current-образа service_temp в test среду! :( ${env.BUILD_URL}"
+		}
+		aborted {
+			slackSend channel: '#jenkins',
+                color: 'warning',
+                message: "Прерван деплой current-образа service_temp в test среду ${env.BUILD_URL}"
+		}
+		success {
+			slackSend channel: '#jenkins',
+                color: 'good',
+                message: "Завершен деплой current-образа service_temp в test среду ${env.BUILD_URL}"
+		}
+	}
+}

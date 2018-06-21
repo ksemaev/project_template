@@ -1,0 +1,52 @@
+#!groovy
+// Runs build and deploy to develop on push
+properties([disableConcurrentBuilds()])
+
+pipeline {
+    agent { 
+		label 'master'
+		}
+	triggers { pollSCM('* * * * *') }
+	options {
+		buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
+		timestamps()
+	}
+    stages {
+		stage("Preparations") {
+			steps {
+				deleteDir() /* clean up our workspace */
+			}
+		}
+        stage("Build :latest image") {
+            steps {
+                build job: "../builder",
+			    parameters: [string(name: 'TAG', value: 'latest')]
+				echo " =========== собирается образ latest"
+			}
+        }
+	    stage("Deploy :latest to develop") {
+            steps {
+                build job: "../deployer",
+			    parameters: [string(name: 'STAND', value: 'dev')]
+				echo " =========== деплоится на dev"
+			}
+        }
+	    stage("Run tests and move issues") {
+            parallel {
+				stage("Move Jira issues to _in_testing") {
+					steps {
+						build job: "move_jira_in_testing",
+						parameters: [string(name: 'UPSTREAM_JOB_ID', value: "${env.BUILD_ID}")]
+						echo " =========== Запущена задача переноса Jira Issues в In testing"
+					}
+				}
+				stage("Run api tests") {
+					steps {
+						build job: "run_api_tests"
+						echo " =========== запущены тесты"
+					}
+				}
+			}
+        }
+    }
+}
