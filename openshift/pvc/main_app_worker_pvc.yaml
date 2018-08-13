@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
- name: main_app_worker-pvc
+ name: main_app_worker-parity-classic.yaml
 spec:
  accessModes:
   - ReadWriteMany
