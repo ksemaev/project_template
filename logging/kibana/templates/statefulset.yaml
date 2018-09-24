@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $.Chart.Name }}
+  namespace: {{ index .Values "kibana" "namespace" }}
+  labels:
+    app: {{ $.Chart.Name }}
+spec:
+  replicas: {{ .Values.kibana.replicas }}
+  selector:
+    matchLabels:
+     component: {{ $.Chart.Name }}
+  template:
+    metadata:
+      labels:
+        component: {{ $.Chart.Name }}
+    spec:
+      containers:
+      - name: kibana
+        image: "{{ .Values.kibana.image.repository }}:{{ .Values.kibana.image.tag }}"
+        imagePullPolicy: {{ .Values.kibana.image.pullPolicy }}
+        env:
+        - name: CLUSTER_NAME
+          value: {{ .Values.kibana.env.CLUSTER_NAME }}
+        - name: ELASTICSEARCH_URL
+          value: {{ .Values.kibana.env.ELASTICSEARCH_URL }}
+        {{- range $key, $value :=  .Values.kibana.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        resources:
+{{ toYaml .Values.kibana.resources | indent 12 }}
+        ports:
+        - containerPort: 5601
+          name: kibana
+          protocol: TCP
+        volumeMounts:
+        - name: {{ .Chart.Name }}-plugins
+          mountPath: /usr/share/kibana/plugins
+      nodeSelector:
+{{ toYaml .Values.kibana.nodeSelector | indent 8 }}
+
+      initContainers:
+      - name: init-chown
+        image: busybox
+        command:
+          - chown
+          - '1000:0'
+          - '/mnt'
+        volumeMounts:
+          - name: {{ $.Chart.Name }}-plugins
+            mountPath: /mnt
+
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ .Chart.Name }}-plugins
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      storageClassName: gp2
+      resources:
+        requests:
+          storage: 1Gi

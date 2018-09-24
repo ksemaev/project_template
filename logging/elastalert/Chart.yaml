@@ -1,0 +1,4 @@
+description: ElastAlert is a simple framework for alerting on anomalies, spikes, or other patterns of interest from data in Elasticsearch.
+name: elastalert
+version: 0.5.0
+

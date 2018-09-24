@@ -1,0 +1,31 @@
+logstash:
+  namespace: logging
+  image:
+    repository: docker.elastic.co/logstash/logstash
+    tag: 6.3.2
+  resources:
+    requests:
+      cpu: 300m
+      memory: 2500Mi
+    limits:
+      cpu: 500m
+      memory: 2500Mi
+  ports:
+  - name: logstash
+    containerPort: 5044
+    protocol: TCP
+  serviceports:
+  - name: logstash
+    port: 5044
+    targetPort: 5044
+    protocol: TCP
+  nodeSelector:
+    infra: "true"
+
+config:
+  - 01-input
+  - 10-logsource
+  - 11-message-parser
+  - 12-message-parser
+  - 99-output
+  - logstash

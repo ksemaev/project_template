@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $.Chart.Name }}-99-output
+  namespace: {{ index .Values "logstash" "namespace" }}
+data:
+  99-output.conf: |-
+    output {
+      if [@metadata][logsource] == "kube-system" {
+        elasticsearch {
+          hosts => "elasticsearch:9200"
+          index => "%{[@metadata][logsource]}-%{+YYYY.MM.dd.hh}"
+          sniffing => false
+        }
+      }
+      else {
+        elasticsearch {
+          hosts => "elasticsearch:9200"
+          index => "%{[@metadata][logsource]}-%{+YYYY.MM.dd}"
+          sniffing => false
+        }
+      }
+    }

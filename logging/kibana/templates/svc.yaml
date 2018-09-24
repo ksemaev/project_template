@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $.Chart.Name }}
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+  labels:
+    app: {{ $.Chart.Name }}
+    component: {{ $.Chart.Name }}
+spec:
+  type: {{ .Values.kibana.serviceType }}
+  ports:
+  - port: {{ .Values.kibana.httpPort }}
+    targetPort: 5601
+    protocol: TCP
+  selector:
+    component: {{ $.Chart.Name }}

@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $.Chart.Name }}
+  namespace: {{ index .Values "logstash" "namespace" }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ $.Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $.Chart.Name }}
+    spec:
+      containers:
+      - image: {{ index .Values "logstash" "image" "repository" }}:{{ index .Values "logstash" "image" "tag" }}
+        name: {{ $.Chart.Name }}
+        ports:
+{{ index .Values "logstash" "ports" | toYaml | indent 8 }}
+        volumeMounts:
+        - name: config
+          mountPath: /usr/share/logstash/config/logstash.yml
+          subPath: logstash.yml
+          readOnly: true
+        - name: jvm
+          mountPath: /usr/share/logstash/config/jvm.options
+          subPath: jvm.options
+          readOnly: true
+{{- range .Values.config }}
+        - name: {{ . }}
+          mountPath: /usr/share/logstash/pipeline/{{ . }}.conf
+          subPath: {{ . }}.conf
+          readOnly: true
+{{- end }}
+        - name: {{ $.Chart.Name }}-data
+          mountPath: /usr/share/logstash/data
+        resources:
+{{ index .Values "logstash" "resources" | toYaml | indent 10 }}
+
+      initContainers:
+      - name: init-chown
+        image: busybox
+        command:
+          - chown
+          - '1000:1000'
+          - '/mnt'
+        volumeMounts:
+          - name: {{ $.Chart.Name }}-data
+            mountPath: /mnt
+
+      volumes:
+      - name: config
+        configMap:
+          name: {{ $.Chart.Name }}
+          items:
+          - key: logstash.yml
+            path: logstash.yml
+      - name: jvm
+        configMap:
+          name: {{ $.Chart.Name }}
+          items:
+          - key: jvm.options
+            path: jvm.options
+{{- range .Values.config }}
+      - name: {{ . }}
+        configMap:
+          name: {{ $.Chart.Name }}-{{ . }}
+          items:
+          - key: {{ . }}.conf
+            path: {{ . }}.conf
+{{- end }}
+
+      nodeSelector:
+{{ toYaml .Values.logstash.nodeSelector | indent 8 }}
+
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ .Chart.Name }}-data
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      storageClassName: gp2
+      resources:
+        requests:
+          storage: 1Gi

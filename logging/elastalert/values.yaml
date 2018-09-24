@@ -1,0 +1,28 @@
+elastalert:
+  namespace: logging
+  replicas: 1
+  nodeSelector:
+    infra: "true"
+
+# Default internal between alert checks against the elasticsearch datasource, in minutes
+runIntervalMins: 1
+# Default rule buffer duration, in minutes
+bufferTimeMins: 15
+
+# For ES 6: The prefix of the names of indices which store elastalert's statuses.
+writebackIndex: elastalert
+
+image:
+  repository: jertel/elastalert-docker
+  tag: 0.1.33
+  pullPolicy: Always
+
+elasticsearch:
+  host: "elasticsearch"
+  port: 9200
+  useSsl: "False"
+
+rules:
+  - app-error
+  - app-warning
+

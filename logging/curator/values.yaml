@@ -1,0 +1,24 @@
+image:
+  curator:
+    repository: bobrik/curator
+    tag: latest
+    pullPolicy: IfNotPresent
+
+curator:
+  enabled: true
+  schedule: "*/5 * * * *"
+
+  vertcoin:
+    timestring: "%Y.%m.%d"
+    unit: "days"
+    unit_count: 2
+
+  bitcoin:
+    timestring: "%Y.%m.%d"
+    unit: "days"
+    unit_count: 2
+
+service:
+  elastichost: elasticsearch
+  elasticport: 9200
+      

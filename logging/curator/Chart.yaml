@@ -1,0 +1,9 @@
+apiVersion: v1
+name: curator
+home: https://www.elastic.co/products/elasticsearch
+version: 0.3.0
+engine: gotpl
+maintainers:
+  - name: Semaev Kirill
+    email: k.semaev@gmail.com
+    url: https://github.com/ksemaev

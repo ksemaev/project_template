@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Chart.Name }}
+  labels:
+    app: {{ $.Chart.Name }}
+spec:
+  replicas: {{ .Values.elastalert.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $.Chart.Name }}
+  template:
+    metadata:
+      labels:
+        name: {{ $.Chart.Name }}
+        app: {{ $.Chart.Name }}
+    spec:
+      containers:
+      - name: elastalert
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        volumeMounts:
+          - name: config
+            mountPath: '/opt/config'
+{{- range .Values.rules }}
+          - name: {{ . }}
+            mountPath: '/opt/rules/{{ . }}.yaml'
+            subPath: {{ . }}.yaml
+            readOnly: true
+{{- end }}
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+      restartPolicy: Always
+
+      volumes:
+{{- range .Values.rules }}
+        - name: {{ . }}
+          configMap:
+            name: {{ $.Chart.Name }}-{{ . }}
+            items:
+            - key: {{ . }}
+              path: {{ . }}.yaml
+{{- end }}
+        - name: config
+          configMap:
+            name: {{ $.Chart.Name }}-config
+            items:
+            - key: elastalert_config
+              path: elastalert_config.yaml
+
+      nodeSelector:
+{{ toYaml .Values.elastalert.nodeSelector | indent 8 }}

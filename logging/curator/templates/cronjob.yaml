@@ -1,0 +1,28 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ $.Chart.Name }}
+  namespace: logging
+  labels:
+    app: {{ $.Chart.Name }}
+spec:
+  schedule: {{ .Values.curator.schedule | quote }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: curator
+            image: "{{ .Values.image.curator.repository }}:{{ .Values.image.curator.tag }}"
+            imagePullPolicy: {{ .Values.image.curator.pullPolicy }}
+            args: ["--config", "/etc/config/config.yml", "/etc/config/action_file.yml"]
+            volumeMounts:
+              - name: config-volume
+                mountPath: /etc/config
+          volumes:
+            - name: config-volume
+              configMap:
+                name: {{ $.Chart.Name }}
+          restartPolicy: OnFailure
+          nodeSelector:
+{{ toYaml .Values.curator.nodeSelector | indent 12 }}

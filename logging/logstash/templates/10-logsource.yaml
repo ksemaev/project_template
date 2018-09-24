@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $.Chart.Name }}-10-logsource
+  namespace: {{ index .Values "logstash" "namespace" }}
+data:
+  10-logsource.conf: |-
+    filter {
+      if [kubernetes][namespace_name] == "vertcoin" {
+      	mutate {
+      	  add_field => {
+      	    "[@metadata][logsource]" => "vertcoin"
+      	  }
+      	}
+      }
+      else if [kubernetes][namespace_name] == "bitcoin" {
+    	mutate {
+    	  add_field => {
+    	    "[@metadata][logsource]" => "bitcoin"
+    	  }
+    	}
+      }
+      else if [kubernetes][namespace_name] == "zcash" {
+    	mutate {
+    	  add_field => {
+    	    "[@metadata][logsource]" => "zcash"
+    	  }
+    	}
+      }
+      else if [kubernetes][namespace_name] == "parity-classic" {
+    	mutate {
+    	  add_field => {
+    	    "[@metadata][logsource]" => "parity-classic"
+    	  }
+    	}
+      }
+      else if [kubernetes][namespace_name] == "kube-system" {
+    	mutate {
+    	  add_field => {
+    	    "[@metadata][logsource]" => "kube-system"
+    	  }
+    	}
+      }
+      else {
+    	mutate {
+    	  add_field => {
+    	    "[@metadata][logsource]" => "logstash"
+    	  }
+    	}
+      }
+    }

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $.Chart.Name }}-12-message-parser
+  namespace: {{ index .Values "logstash" "namespace" }}
+data:
+  12-message-parser.conf: |-
+    filter {
+      if [kubernetes][labels][app] == "vertcoind-haproxy" {
+        grok {
+          match => { "realmessage" => "http_method:%{DATA:http_method},status_code:%{DATA:status_code},http_request_uri:%{DATA:http_request_uri},http_request:%{DATA:http_request},header_request:%{DATA:header_request},header_response:%{DATA:header_response},client_ip:%{DATA:client_ip},client_port:%{DATA:client_port},backend_ip:%{DATA:backend_ip},frontend_ip:%{DATA:frontend_ip},server_ip:%{DATA:server_ip},backend_name:%{DATA:backend_name},backend_queue:%{NUMBER:backend_queue:int},retries:%{NUMBER:retries:int},bytes_read:%{NUMBER:bytes_read:int},bytes_uploaded:%{NUMBER:bytes_uploaded:int},upstream_response_time:%{NUMBER:upstream_response_time:int},upstream_connect_time:%{NUMBER:upstream_connect_time:int},session_duration:%{NUMBER:session_duration:int},termination_state:%{DATA:termination_state},actconn:%{NUMBER:actconn:int},beconn:%{NUMBER:beconn:int},feconn:%{NUMBER:feconn:int},timestamp:%{DATA:timestamp}" }
+        }
+      }
+    }

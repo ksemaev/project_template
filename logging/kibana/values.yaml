@@ -1,0 +1,25 @@
+kibana:
+  replicas: 1
+  image:
+    repository: docker.elastic.co/kibana/kibana-oss
+    tag: 6.3.2
+    pullPolicy: Always
+  httpPort: 80
+  resources:
+    limits:
+      cpu: 500m
+      memory: 800Mi
+    requests:
+      cpu: 300m
+      memory: 500Mi
+  env:
+    CLUSTER_NAME: "myesdb"
+    ELASTICSEARCH_URL: "http://elasticsearch:9200"
+    # XPACK_GRAPH_ENABLED: "false"
+    # XPACK_ML_ENABLED: "false"
+    # XPACK_REPORTING_ENABLED: "false"
+    # XPACK_SECURITY_ENABLED: "false"
+  serviceType: LoadBalancer
+  nodeSelector:
+    infra: "true"
+      

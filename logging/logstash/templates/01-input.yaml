@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $.Chart.Name }}-01-input
+  namespace: {{ index .Values "logstash" "namespace" }}
+data:
+  01-input.conf: |-
+    input {
+      http {
+        port => 5044
+        codec => "json"
+      }
+    }
