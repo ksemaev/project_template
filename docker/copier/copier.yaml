@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: copier-0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: copier
+  template:
+    metadata:
+      labels:
+        app: copier
+    spec:
+      containers:
+      - name: copier
+        image: quay.io/ksemaev/copier
+#        command:
+#          - rsync -Pa /mnt/source/* /mnt/destination
+        volumeMounts:
+          - name: source
+            mountPath: /mnt/source
+          - name: destination
+            mountPath: /mnt/destination
+      volumes:
+      - name: source
+        persistentVolumeClaim:
+          claimName:  data-bitcoind-0
+      - name: destination
+        persistentVolumeClaim:
+          claimName:  data-bitcoin-0
