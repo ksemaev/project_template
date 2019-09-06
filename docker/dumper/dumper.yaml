@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dumper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dumper
+  template:
+    metadata:
+      labels:
+        app: dumper
+    spec:
+      containers:
+      - name: dumper
+        image: quay.io/ksemaev/dumper
+        volumeMounts:
+          - name: dump
+            mountPath: /mnt/dump
+      volumes:
+        - name: dump
+          persistentVolumeClaim:
+            claimName:  eos-source
