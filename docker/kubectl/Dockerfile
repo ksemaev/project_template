@@ -8,7 +8,7 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s 
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip && \
     ./aws/install -i /usr/local/aws-cli -b /usr/local/bin && \
-    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && \
+    curl -LO https://git.io/get_helm.sh && \
     chmod 700 get_helm.sh && \
     ./get_helm.sh
 
