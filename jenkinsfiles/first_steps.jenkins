@@ -13,12 +13,12 @@ pipeline {
     stages {
         stage("First step") {
             steps {
-                sh 'ssh root@localhost \'hostname\''
+                sh 'ssh cloud_user@e1ff2a93e31c.mylabserver.com \'hostname\''
             }
         }
         stage("Second step") {
             steps {
-                sh 'ssh root@localhost \'uptime\''
+                sh 'ssh cloud_user@e1ff2a93e31c.mylabserver.com \'uptime\''
             }
         }
     }
