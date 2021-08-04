@@ -12,12 +12,30 @@ pipeline {
         timestamps()
     }
     stages {
+        staget("docker login") {
+            steps {
+            echo " ============== docker login =================="
+            withCredentials([usernamePassword(credentialsId: 'dockerhub_creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD'])) {
+            sh """
+            docker login -u $USERNAME -p $PASSWORD
+            """
+            }
+          }
+        }
         stage("create docker image") {
             steps {
                 echo " ============== start building image =================="
                 dir ('docker/toolbox') {
                 	sh 'docker build -t anotherrobbo/toolbox:latest . '
                 }
+            }
+        }
+        stage("docker push") {
+            steps {
+                echo " ============== start building image =================="
+                sh """
+                docker push anotherrobbo/toolbox:latest
+                """
             }
         }
     }
