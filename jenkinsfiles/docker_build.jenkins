@@ -6,7 +6,7 @@ pipeline {
     agent { 
         label 'cloud'
         }
-    triggers { pollSCM('* * * * *') }
+    triggers { pollSCM('* * * * *') } # Poll github every minute
     options {
         buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
         timestamps()
