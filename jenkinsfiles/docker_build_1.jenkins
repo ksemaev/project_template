@@ -14,6 +14,7 @@ pipeline {
     agent { 
         label 'Docker'                                                                    
     }
+    triggers { pollSCM('* * * * *') }
     options {
         timestamps()
     }
