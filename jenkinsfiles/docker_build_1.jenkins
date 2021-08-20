@@ -20,7 +20,7 @@ pipeline {
     stages {
         stage('Show my dir') { 
             steps {
-                sh 'pwd' 
+                sh 'pwd && whoami && hostname' 
             }
         }
         stage('Show all files') { 
