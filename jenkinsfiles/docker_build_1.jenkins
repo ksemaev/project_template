@@ -8,13 +8,14 @@ properties([
 			numToKeepStr: '10')
 	),
 	disableConcurrentBuilds()
-	timestamps()
-
 ])
 
 pipeline {
     agent { 
         label 'Docker'                                                                    
+    }
+    options {
+        timestamps()
     }
     stages {
         stage('Show my dir') { 
