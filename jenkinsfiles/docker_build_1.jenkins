@@ -14,7 +14,10 @@ properties([
 pipeline {
     agent { 
         label 'Docker'                                                                    
-        }
+    }
+    options {
+        timestamps()
+    }
     stages {
         stage('Show my dir') { 
             steps {
