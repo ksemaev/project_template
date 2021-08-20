@@ -12,7 +12,7 @@ properties([
 ])
 
 pipeline {
-    agent 'Docker' 
+    agent Docker 
     stages {
         stage('Show my dir') { 
             steps {
