@@ -1,0 +1,43 @@
+
+properties([
+	buildDiscarder(
+		logRotator(
+			artifactDaysToKeepStr: '',
+			artifactNumToKeepStr: '10',
+			daysToKeepStr: '',
+			numToKeepStr: '10')
+	),
+	disableConcurrentBuilds()
+
+])
+
+pipeline {
+    agent 'Docker' 
+    stages {
+        stage('Show my dir') { 
+            steps {
+                sh 'pwd' 
+            }
+        }
+        stage('Show all files') { 
+            steps {
+                sh 'ls -la'
+            }
+        }
+        stage('Deploy image') { 
+            steps {
+                echo '=============================== Start building image ======================================='
+                dir ('docker/toolbox') {
+                    sh 'docker build .'
+                }
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
