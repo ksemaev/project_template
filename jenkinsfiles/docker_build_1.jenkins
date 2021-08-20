@@ -32,7 +32,7 @@ pipeline {
             steps {
                 echo '=============================== Start building image ======================================='
                 dir ('docker/toolbox') {
-                    sh 'sudo docker build .'
+                    sh 'docker build .'
                 }
             }
         }
