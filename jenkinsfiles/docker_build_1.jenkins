@@ -1,0 +1,54 @@
+
+properties([
+	buildDiscarder(
+		logRotator(
+			artifactDaysToKeepStr: '',
+			artifactNumToKeepStr: '10',
+			daysToKeepStr: '',
+			numToKeepStr: '10')
+	),
+	disableConcurrentBuilds()
+])
+
+pipeline {
+    agent { 
+        label 'Docker'                                                                    
+    }
+    triggers { pollSCM('* * * * *') }
+    options {
+        timestamps()
+    }
+    stages {
+        stage('Docker login') {
+            steps {
+                echo " ============================= docker login ================================================"
+                withCredentials([usernamePassword(credentialsId: 'dockerhub_vladimirpuidak', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh """
+                    docker login -u $USERNAME -p $PASSWORD
+                    """
+                }
+            }
+        }
+        stage('Deploy image') { 
+            steps {
+                echo '=============================== Start building image ======================================='
+                dir ('docker/toolbox') {
+                    sh 'docker build -t vladimirpuidak/toolbox1:latest .'
+                }
+            }
+        }
+	stage('Docker push') {
+            steps {
+                echo " ============================ start pushing image ==========================================="
+                sh 'docker push vladimirpuidak/toolbox1:latest'
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
