@@ -20,5 +20,11 @@ pipeline {
                 sh 'ssh root@192.168.0.27 \'uptime\''
             }
         }
+        stage("Third step") {
+            steps {
+                sh 'ssh root@192.168.0.27 \'pwd\''
+            }
+        }
+        
     }
 }
