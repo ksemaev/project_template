@@ -22,10 +22,10 @@ pipeline {
                         }
                         
                         dir('docker/toolbox') {
-                            sh 'docker build -t nmorework/toolbox:latest .'
+                            sh 'docker build -t nmorework/nmore:latest .'
                         }
 
-                        sh 'docker push nmorework/toolbox:latest'
+                        sh 'docker push nmorework/nmore:latest'
                     } catch (Exception e) {
                         currentBuild.result = 'FAILURE'
                         error("Build and push failed: ${e.message}")
