@@ -1,41 +1,37 @@
-#!groovy
-// Run docker build
-properties([disableConcurrentBuilds()])
-
 pipeline {
-    agent { 
+    agent {
         label 'master'
-        }
-    triggers{ pollSCM('* * * * *') } 
+    }
+    triggers {
+        pollSCM('* * * * *')
+    }
     options {
         buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
         timestamps()
     }
     stages {
-        stage("docker login") {
+        stage("Docker Build and Push") {
             steps {
-                echo " ============== docker login =================="
-                withCredentials([usernamePassword(credentialsId: 'dockerhub_nmore', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    sh """
-                    docker login -u $USERNAME -p $PASSWORD
-                    """
+                script {
+                    try {
+                        echo "============= Starting Docker Build and Push ============="
+                        withCredentials([usernamePassword(credentialsId: 'dockerhub_nmore', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                            sh """
+                            docker login -u \$USERNAME -p \$PASSWORD
+                            """
+                        }
+                        
+                        dir('docker/toolbox') {
+                            sh 'docker build -t nmorework/toolbox:latest .'
+                        }
+
+                        sh 'docker push nmorework/toolbox:latest'
+                    } catch (Exception e) {
+                        currentBuild.result = 'FAILURE'
+                        error("Build and push failed: ${e.message}")
+                    }
                 }
             }
-        stage("create docker image") {
-            steps {
-                echo " ============== start building image =================="
-                dir ('docker/toolbox'){
-                    sh 'docker build -t nmorework/toolbox:latest . '       
-                 }
-                }
-            }
-     stage("docker push") {
-            steps {
-                echo " ============== start pushing image =================="
-                sh '''
-                docker push nmorework/toolbox:latest
-                '''
-            }
         }
-        }
+    }
 }
